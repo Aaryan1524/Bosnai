@@ -161,6 +161,37 @@ describe('buildGarden', () => {
     expect(gardenA.events[0]?.meta?.sha).toBe('a'.repeat(40));
   });
 
+  it('sorts pre-1970 (negative epoch ms) commits chronologically, not lexicographically', () => {
+    const history = makeHistory({
+      commits: [
+        {
+          sha: 'later'.padEnd(40, '0'),
+          authorName: 'Later',
+          authorEmail: 'later@example.com',
+          timestamp: new Date('1969-06-01T00:00:00Z').getTime(), // negative epoch ms
+          message: 'later (still before 1970)',
+          parents: [],
+          linesChanged: 1,
+        },
+        {
+          sha: 'earlier'.padEnd(40, '0'),
+          authorName: 'Earlier',
+          authorEmail: 'earlier@example.com',
+          timestamp: new Date('1969-01-01T00:00:00Z').getTime(), // more negative epoch ms
+          message: 'earlier',
+          parents: [],
+          linesChanged: 1,
+        },
+      ],
+    });
+
+    const garden = buildGarden(history, { window: 'all', config: baseConfig(), now: NOW });
+    const growth = garden.events.filter((e) => e.kind === 'growth');
+
+    expect(growth[0]?.meta?.sha).toBe('earlier'.padEnd(40, '0'));
+    expect(growth[1]?.meta?.sha).toBe('later'.padEnd(40, '0'));
+  });
+
   it('filters events outside the configured window (e.g. "365d")', () => {
     const history = makeHistory({
       commits: [

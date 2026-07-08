@@ -15,6 +15,19 @@ function parseIntInput(value: string, fallback: number): number {
   return Number.isFinite(parsed) && value.trim() !== '' ? parsed : fallback;
 }
 
+/** Parses a positive-dimension input, falling back (with a warning) on anything else. */
+function parseDimension(value: string, label: string, fallback: number): number {
+  if (value === '') {
+    return fallback;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    core.warning(`Ignoring invalid "${label}" input "${value}" (must be a positive number); using ${fallback}.`);
+    return fallback;
+  }
+  return parsed;
+}
+
 async function run(): Promise<void> {
   const cwd = process.env.GITHUB_WORKSPACE ?? process.cwd();
 
@@ -24,12 +37,15 @@ async function run(): Promise<void> {
   const window = core.getInput('window') || 'all';
   const widthInput = core.getInput('width');
   const heightInput = core.getInput('height');
-  const shouldCommit = core.getInput('commit') !== 'false';
+  const shouldCommit = core.getInput('commit') === '' || core.getBooleanInput('commit');
   const githubToken = core.getInput('github-token') || process.env.GITHUB_TOKEN || '';
+  if (githubToken !== '') {
+    core.setSecret(githubToken);
+  }
 
   const biome = getBiome(biomeName);
-  const width = widthInput !== '' ? Number(widthInput) : (biome.defaultDimensions?.width ?? 800);
-  const height = heightInput !== '' ? Number(heightInput) : (biome.defaultDimensions?.height ?? 600);
+  const width = parseDimension(widthInput, 'width', biome.defaultDimensions?.width ?? 800);
+  const height = parseDimension(heightInput, 'height', biome.defaultDimensions?.height ?? 600);
 
   const history = await readHistory({ cwd, gapThresholdDays });
   const garden = buildGarden(history, {

@@ -6,7 +6,7 @@
 
 import { exec, getExecOutput } from '@actions/exec';
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { relative, resolve } from 'node:path';
 
 export type CommitOptions = {
   cwd: string;
@@ -33,16 +33,53 @@ export type CommitResult = {
 
 const MARKER_START = '<!-- repo-garden:start -->';
 const MARKER_END = '<!-- repo-garden:end -->';
+const FENCE_LINE = /^\s*(```|~~~)/;
+
+/**
+ * Character ranges of fenced code blocks in a markdown string, so marker
+ * matching can skip documentation examples (e.g. a README explaining the
+ * marker syntax by showing it inside a ```html fence — a real occurrence
+ * of this project's own doc content).
+ */
+function fencedRanges(text: string): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  let offset = 0;
+  let fenceStart: number | null = null;
+  for (const line of text.split('\n')) {
+    if (FENCE_LINE.test(line)) {
+      if (fenceStart === null) {
+        fenceStart = offset;
+      } else {
+        ranges.push([fenceStart, offset + line.length]);
+        fenceStart = null;
+      }
+    }
+    offset += line.length + 1;
+  }
+  return ranges;
+}
+
+function findOutsideFences(text: string, marker: string, ranges: Array<[number, number]>): number {
+  let idx = text.indexOf(marker);
+  while (idx !== -1) {
+    if (!ranges.some(([start, end]) => idx >= start && idx <= end)) {
+      return idx;
+    }
+    idx = text.indexOf(marker, idx + 1);
+  }
+  return -1;
+}
 
 /**
  * Replace the content between `<!-- repo-garden:start -->` and
  * `<!-- repo-garden:end -->` markers in a README string with an image
  * reference to `svgRelativePath`. Returns the README unchanged if no
- * markers are present.
+ * (non-fenced) markers are present.
  */
 export function injectReadmeMarker(readme: string, svgRelativePath: string): string {
-  const startIdx = readme.indexOf(MARKER_START);
-  const endIdx = readme.indexOf(MARKER_END);
+  const ranges = fencedRanges(readme);
+  const startIdx = findOutsideFences(readme, MARKER_START, ranges);
+  const endIdx = findOutsideFences(readme, MARKER_END, ranges);
   if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
     return readme;
   }
@@ -90,8 +127,17 @@ async function configureAuthRemote(cwd: string, githubToken: string): Promise<vo
  * README marker block if present, and commit+push when `commit` is true
  * and content changed.
  */
+/** Throws if `relativePath` would resolve outside `cwd` (e.g. via "../.."). */
+function assertWithinCwd(cwd: string, relativePath: string): string {
+  const abs = resolve(cwd, relativePath);
+  if (relative(cwd, abs).startsWith('..')) {
+    throw new Error(`Refusing to write outside the repo: "${relativePath}" resolves to ${abs}`);
+  }
+  return abs;
+}
+
 export async function writeAndCommit(options: CommitOptions): Promise<CommitResult> {
-  const absOutputPath = join(options.cwd, options.outputPath);
+  const absOutputPath = assertWithinCwd(options.cwd, options.outputPath);
   const existingSvg = await readFileIfExists(absOutputPath);
   if (existingSvg === options.svg) {
     return { svgPath: options.outputPath, commitSha: '' };
@@ -100,7 +146,7 @@ export async function writeAndCommit(options: CommitOptions): Promise<CommitResu
   await writeFile(absOutputPath, options.svg, 'utf8');
 
   const readmeRelPath = options.readmePath ?? 'README.md';
-  const readmeAbsPath = join(options.cwd, readmeRelPath);
+  const readmeAbsPath = assertWithinCwd(options.cwd, readmeRelPath);
   const readme = await readFileIfExists(readmeAbsPath);
   let readmeChanged = false;
   if (readme !== undefined) {

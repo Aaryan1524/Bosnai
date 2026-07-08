@@ -53,6 +53,23 @@ describe('renderGarden', () => {
     vi.resetModules();
   });
 
+  it('accepts a biome that uses single-quoted width/height attributes', async () => {
+    vi.resetModules();
+    vi.doMock('../src/biomes/registry', () => ({
+      getBiome: (): Biome => ({
+        name: 'single-quoted',
+        displayName: 'Single Quoted',
+        author: 'test',
+        description: '',
+        render: () => "<svg width='800' height='600'></svg>",
+      }),
+    }));
+    const { renderGarden: renderGardenMocked } = await import('../src/core/render');
+    expect(() => renderGardenMocked(makeGarden(), { biomeName: 'single-quoted' })).not.toThrow();
+    vi.doUnmock('../src/biomes/registry');
+    vi.resetModules();
+  });
+
   it('rejects a biome that ignores the configured dimensions', async () => {
     vi.resetModules();
     vi.doMock('../src/biomes/registry', () => ({
