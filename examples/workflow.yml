@@ -1,0 +1,16 @@
+name: Repo Garden
+on:
+  schedule: [{ cron: '0 3 * * *' }] # nightly
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  grow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 } # full history — required
+      - uses: Aaryan1524/Bosnai@v1
+        with:
+          biome: bonsai
