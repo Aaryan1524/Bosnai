@@ -4,23 +4,27 @@
  */
 
 import type { Biome } from './types';
+import { bonsai } from './bonsai';
+import { neonVine } from './neon-vine';
 
-/**
- * All registered biomes, keyed by name.
- * TODO(scaffold): populate with { bonsai } and { neonVine } once implemented.
- */
-const registry: Map<string, Biome> = new Map();
+const registry: Map<string, Biome> = new Map([
+  [bonsai.name, bonsai],
+  [neonVine.name, neonVine],
+]);
 
 /**
  * Look up a biome by name.
  * Throws a clear error listing available biomes if the name is unknown.
- * TODO(scaffold): implement
  */
 export function getBiome(name: string): Biome {
-  throw new Error('TODO(scaffold): implement getBiome');
+  const biome = registry.get(name);
+  if (biome === undefined) {
+    throw new Error(`Unknown biome "${name}". Available biomes: ${listBiomes().join(', ')}`);
+  }
+  return biome;
 }
 
-/** List all registered biome names, sorted for deterministic output. TODO(scaffold): implement */
+/** List all registered biome names, sorted for deterministic output. */
 export function listBiomes(): string[] {
-  throw new Error('TODO(scaffold): implement listBiomes');
+  return Array.from(registry.keys()).sort();
 }

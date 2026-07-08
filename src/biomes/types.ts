@@ -19,8 +19,7 @@ export type Biome = {
 /**
  * Identity helper that gives authors type inference/checking when defining
  * a biome object, without needing to annotate every field by hand.
- * TODO(scaffold): implement
  */
 export function defineBiome(biome: Biome): Biome {
-  throw new Error('TODO(scaffold): implement defineBiome');
+  return biome;
 }
