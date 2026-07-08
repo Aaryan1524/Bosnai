@@ -93,6 +93,7 @@ Add these two lines wherever you want the art to appear:
 
 ```html
 <!-- repo-garden:start -->
+![Repo Garden](garden.svg)
 <!-- repo-garden:end -->
 ```
 
