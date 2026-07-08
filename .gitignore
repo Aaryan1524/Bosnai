@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Test output
+coverage/
+
+# Docs site build artifacts
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# Misc
+*.log
+.DS_Store
+
+# NOTE: dist/ is intentionally committed — action.yml runs dist/index.js

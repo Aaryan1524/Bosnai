@@ -1,0 +1,41 @@
+{
+  "name": "repo-garden",
+  "version": "0.1.0",
+  "description": "A GitHub Action that grows a procedurally-generated botanical SVG from your repo's git history",
+  "keywords": [
+    "github-action",
+    "svg",
+    "generative-art",
+    "git",
+    "readme"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aaryan1524/Bosnai.git"
+  },
+  "license": "MIT",
+  "author": "Aaryan",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/main.ts -o dist --minify",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@actions/core": "^2.0.3",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^9.1.1",
+    "fast-xml-parser": "^5.0.0",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "@vercel/ncc": "^0.38.3",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.7"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
