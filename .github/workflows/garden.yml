@@ -1,0 +1,23 @@
+name: Repo Garden
+
+on:
+  schedule: [{ cron: '0 3 * * *' }] # nightly
+  push: { branches: [main] }
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  grow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 } # full history — required
+
+      # Dogfooding: this repo runs itself from the local checkout (./)
+      # rather than a version tag, since the tag doesn't exist until release.
+      # Other repos install via `Aaryan1524/Bosnai@v1` — see README.
+      - uses: ./
+        with:
+          biome: bonsai
