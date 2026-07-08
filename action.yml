@@ -1,0 +1,52 @@
+name: 'Repo Garden'
+description: >-
+  Grow a procedurally-generated botanical SVG (bonsai, neon-vine, ...) from
+  your repository's git history and commit it into your README.
+author: 'Aaryan'
+branding:
+  icon: 'git-branch'
+  color: 'green'
+
+inputs:
+  biome:
+    description: 'Which biome (visual theme) to render. One of the registered biomes, e.g. "bonsai" or "neon-vine".'
+    required: false
+    default: 'bonsai'
+  output-path:
+    description: 'Path (relative to the repo root) where the rendered SVG is written.'
+    required: false
+    default: 'garden.svg'
+  gap-threshold-days:
+    description: 'A span of this many days with no commits counts as a "wither" (dormancy) event.'
+    required: false
+    default: '21'
+  window:
+    description: 'History window to render: "all" for the full history, or a duration like "365d" for only the most recent period.'
+    required: false
+    default: 'all'
+  width:
+    description: 'Optional width override (px) for the rendered SVG. Defaults to the biome''s preferred width.'
+    required: false
+    default: ''
+  height:
+    description: 'Optional height override (px) for the rendered SVG. Defaults to the biome''s preferred height.'
+    required: false
+    default: ''
+  commit:
+    description: 'If "true", commit the SVG (and README marker update) back to the repo. If "false", just write the file and set outputs.'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'Token used to push the commit. Defaults to the workflow''s GITHUB_TOKEN.'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  svg-path:
+    description: 'Path of the rendered SVG file.'
+  commit-sha:
+    description: 'SHA of the commit created by the action, if a commit was made (empty when skipped or commit: false).'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
