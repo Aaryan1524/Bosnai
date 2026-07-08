@@ -26,6 +26,44 @@ describe('injectReadmeMarker', () => {
     const readme = '# Just a title\n\nSome content.';
     expect(injectReadmeMarker(readme, 'garden.svg')).toBe(readme);
   });
+
+  it('does not corrupt a documentation example: markers that only appear inside a fenced code block are left untouched', () => {
+    const readme = [
+      '# Install',
+      '',
+      'Add these two lines:',
+      '',
+      '```html',
+      '<!-- repo-garden:start -->',
+      '<!-- repo-garden:end -->',
+      '```',
+      '',
+      'That is all.',
+    ].join('\n');
+    expect(injectReadmeMarker(readme, 'garden.svg')).toBe(readme);
+  });
+
+  it('updates a real marker pair while leaving a fenced documentation example untouched', () => {
+    const readme = [
+      '# Install',
+      '',
+      '```html',
+      '<!-- repo-garden:start -->',
+      '<!-- repo-garden:end -->',
+      '```',
+      '',
+      '## Live',
+      '',
+      '<!-- repo-garden:start -->',
+      '<!-- repo-garden:end -->',
+    ].join('\n');
+    const out = injectReadmeMarker(readme, 'garden.svg');
+    expect(out).toContain('![Repo Garden](garden.svg)');
+    // the fenced example block is byte-for-byte unchanged
+    expect(out).toContain('```html\n<!-- repo-garden:start -->\n<!-- repo-garden:end -->\n```');
+    // exactly one image reference was inserted (into the live pair, not the example)
+    expect(out.split('![Repo Garden]').length - 1).toBe(1);
+  });
 });
 
 describe('writeAndCommit', () => {
@@ -116,5 +154,17 @@ describe('writeAndCommit', () => {
 
     const readme = await readFile(join(dir, 'README.md'), 'utf8');
     expect(readme).toContain('![Repo Garden](garden.svg)');
+  });
+
+  it('refuses to write outside the repo root', async () => {
+    await expect(
+      writeAndCommit({
+        cwd: dir,
+        outputPath: '../../etc/pwned.svg',
+        svg: '<svg/>',
+        commit: false,
+        githubToken: '',
+      }),
+    ).rejects.toThrow(/Refusing to write outside the repo/);
   });
 });

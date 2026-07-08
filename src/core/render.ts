@@ -37,8 +37,8 @@ function extractRootDimension(svg: string, attr: 'width' | 'height'): string | n
   if (rootMatch === null) {
     return null;
   }
-  const attrMatch = new RegExp(`\\b${attr}\\s*=\\s*"([^"]*)"`, 'i').exec(rootMatch[0]);
-  return attrMatch?.[1] ?? null;
+  const attrMatch = new RegExp(`\\b${attr}\\s*=\\s*("([^"]*)"|'([^']*)')`, 'i').exec(rootMatch[0]);
+  return attrMatch?.[2] ?? attrMatch?.[3] ?? null;
 }
 
 /**
